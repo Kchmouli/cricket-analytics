@@ -1,0 +1,90 @@
+version: 2
+
+models:
+  - name: fct_deliveries
+    description: >
+      Full ball-by-ball fact table. All 9.7M+ deliveries enriched with match context
+      and normalised team/venue names. Partitioned by match_type and year in source;
+      materialised as a single DuckDB table in gold.
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+      - name: batter
+        tests:
+          - not_null
+      - name: bowler
+        tests:
+          - not_null
+      - name: runs_total
+        tests:
+          - not_null
+
+  - name: fct_match_results
+    description: >
+      One row per match with outcome, teams, venue, and event details. Team and venue
+      names normalised via seed lookup tables. Use this for win/loss analysis,
+      tournament standings, and head-to-head records.
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - unique
+      - name: match_type
+        tests:
+          - not_null
+      - name: team_1
+        tests:
+          - not_null
+      - name: team_2
+        tests:
+          - not_null
+
+  - name: dim_players
+    description: >
+      One row per player — canonical identity, match type coverage, teams played for,
+      and career span. Cricsheet UUID is the stable identifier across name variants.
+    columns:
+      - name: player_name
+        tests:
+          - not_null
+          - unique
+      - name: total_matches
+        tests:
+          - not_null
+
+  - name: mart_batting_career
+    description: >
+      Career batting aggregates per player per match type. Super overs excluded.
+      Covers runs, average, strike rate, centuries, fifties, ducks.
+    columns:
+      - name: player_name
+        tests:
+          - not_null
+      - name: match_type
+        tests:
+          - not_null
+      - name: total_runs
+        tests:
+          - not_null
+    tests:
+      - unique:
+          column_name: "player_name || '|' || match_type"
+
+  - name: mart_bowling_career
+    description: >
+      Career bowling aggregates per player per match type. Super overs excluded.
+      Wickets credited excludes run-outs. Economy uses legal deliveries only.
+    columns:
+      - name: player_name
+        tests:
+          - not_null
+      - name: match_type
+        tests:
+          - not_null
+      - name: total_wickets
+        tests:
+          - not_null
+    tests:
+      - unique:
+          column_name: "player_name || '|' || match_type"

@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: int_ball_by_ball
+    description: >
+      Deliveries enriched with match context (date, teams, venue) and team/venue
+      names normalised via seed lookup tables. This is the foundation for all
+      batting and bowling aggregations.
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+      - name: batting_team
+        tests:
+          - not_null
+      - name: bowling_team
+        tests:
+          - not_null
+      - name: runs_total
+        tests:
+          - not_null
+
+  - name: int_batting_by_innings
+    description: >
+      Per-batter per-innings aggregates: runs, balls faced, boundaries, strike rate,
+      dismissal. Super overs included here; excluded in mart_batting_career.
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+      - name: player_name
+        tests:
+          - not_null
+      - name: innings_number
+        tests:
+          - not_null
+      - name: runs
+        tests:
+          - not_null
+
+  - name: int_bowling_by_innings
+    description: >
+      Per-bowler per-innings aggregates: legal deliveries, runs conceded, wickets
+      credited (run-outs excluded), economy. Super overs included here; excluded
+      in mart_bowling_career.
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+      - name: player_name
+        tests:
+          - not_null
+      - name: innings_number
+        tests:
+          - not_null
+      - name: wickets_credited
+        tests:
+          - not_null

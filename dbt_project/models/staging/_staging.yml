@@ -1,0 +1,93 @@
+version: 2
+
+models:
+  - name: stg_matches
+    description: "One row per match — thin wrapper over silver with date cast and boolean coalescing"
+    columns:
+      - name: match_id
+        description: "Cricsheet filename stem — globally unique match identifier"
+        tests:
+          - not_null
+          - unique
+      - name: match_type
+        description: "t20 / odi / test / it20 / odm / mdm (normalised to lowercase)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [t20, odi, test, it20, odm, mdm]
+      - name: match_date
+        description: "First date of the match"
+        tests:
+          - not_null
+      - name: team_1
+        tests:
+          - not_null
+      - name: team_2
+        tests:
+          - not_null
+      - name: outcome_winner
+        description: "Winning team name — null for draws, no-results, and ties"
+
+  - name: stg_innings
+    description: "One row per innings"
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_matches')
+              field: match_id
+      - name: innings_number
+        description: "1-indexed innings sequence within the match (can exceed 4 with multiple super overs)"
+        tests:
+          - not_null
+      - name: batting_team
+        tests:
+          - not_null
+
+  - name: stg_deliveries
+    description: "One row per ball bowled"
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_matches')
+              field: match_id
+      - name: innings_number
+        tests:
+          - not_null
+      - name: over_number
+        description: "0-indexed over number"
+        tests:
+          - not_null
+      - name: ball_in_over
+        description: "1-indexed ball sequence within the over (can exceed 6 for extras)"
+        tests:
+          - not_null
+      - name: batter
+        tests:
+          - not_null
+      - name: bowler
+        tests:
+          - not_null
+      - name: runs_non_boundary
+        description: "True when 4 or 6 runs scored but NOT from hitting the boundary (e.g. overthrows)"
+
+  - name: stg_players
+    description: "Playing XI per match per team — one row per player per match"
+    columns:
+      - name: match_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_matches')
+              field: match_id
+      - name: player_name
+        tests:
+          - not_null
+      - name: cricsheet_id
+        description: "8-char Cricsheet UUID — null for a small number of older matches"
+      - name: team
+        tests:
+          - not_null

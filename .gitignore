@@ -1,0 +1,23 @@
+# Secrets
+.env
+
+# Data — too large for git
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# dbt build artefacts
+dbt_project/target/
+dbt_project/dbt_packages/
+dbt_project/logs/
+
+# IDE
+.vscode/
+
+# Claude memory
+.claude/

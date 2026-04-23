@@ -1,0 +1,65 @@
+name: Full Load (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type FULL to confirm — this rebuilds all silver and gold from scratch"
+        required: true
+
+jobs:
+  full-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    if: ${{ github.event.inputs.confirm == 'FULL' }}
+
+    env:
+      AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+      AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
+      AZURE_STORAGE_CONTAINER: ${{ secrets.AZURE_STORAGE_CONTAINER }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # ── Bronze ────────────────────────────────────────────────────────────────
+      - name: Download all matches from Cricsheet
+        run: python ingestion/download.py full
+
+      - name: Upload all JSON files to ADLS bronze
+        run: python ingestion/bronze_loader.py
+
+      # ── Silver ────────────────────────────────────────────────────────────────
+      - name: Rebuild silver Parquet from all JSON files
+        run: python ingestion/silver_transformer.py --mode full
+
+      - name: Upload all silver Parquet to ADLS
+        run: python ingestion/silver_loader.py
+
+      # ── Gold (dbt) ────────────────────────────────────────────────────────────
+      - name: dbt seed
+        working-directory: dbt_project
+        run: dbt seed --profiles-dir . --target prod
+
+      - name: dbt run
+        working-directory: dbt_project
+        run: >
+          dbt run
+          --profiles-dir . --target prod
+          --vars '{"silver_path": "az://cricket-data/silver"}'
+
+      - name: dbt test
+        working-directory: dbt_project
+        run: >
+          dbt test
+          --profiles-dir . --target prod
+          --vars '{"silver_path": "az://cricket-data/silver"}'

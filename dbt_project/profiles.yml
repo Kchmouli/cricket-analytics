@@ -1,0 +1,18 @@
+cricket_analytics:
+  target: dev
+  outputs:
+
+    dev:
+      type: duckdb
+      path: "../data/gold.duckdb"
+      threads: 4
+
+    prod:
+      type: duckdb
+      path: "../data/gold.duckdb"
+      threads: 4
+      extensions:
+        - azure
+      settings:
+        azure_storage_account_name: cricketanalyticsdata
+        azure_storage_account_key: "{{ env_var('AZURE_STORAGE_ACCOUNT_KEY') }}"
