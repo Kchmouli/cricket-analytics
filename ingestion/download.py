@@ -34,7 +34,11 @@ def download_and_extract(url: str, mode: str):
     print(f"Mode: {mode}")
     print(f"Downloading {url} ...")
 
-    resp = requests.get(url, timeout=300)
+    headers = {
+        "User-Agent": "cricket-analytics/1.0 (+https://github.com/Kchmouli/cricket-analytics)",
+        "Accept": "application/zip, application/octet-stream, */*",
+    }
+    resp = requests.get(url, headers=headers, timeout=300)
     resp.raise_for_status()
 
     size_mb = len(resp.content) / 1024 / 1024
