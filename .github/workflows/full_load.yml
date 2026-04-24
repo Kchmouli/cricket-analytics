@@ -43,10 +43,6 @@ jobs:
       - name: Add venv to PATH
         run: echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
 
-      - name: Set SSL cert path for DuckDB azure extension
-        run: |
-          echo "SSL_CERT_FILE=$(python -c 'import certifi; print(certifi.where())')" >> $GITHUB_ENV
-
       # ── Bronze ────────────────────────────────────────────────────────────────
       - name: Download all matches from Cricsheet
         run: python ingestion/download.py full
@@ -71,11 +67,11 @@ jobs:
         run: >
           dbt run
           --profiles-dir . --target prod
-          --vars '{"silver_path": "az://cricket-data/silver"}'
+          --vars '{"silver_path": "abfs://cricket-data/silver"}'
 
       - name: dbt test
         working-directory: dbt_project
         run: >
           dbt test
           --profiles-dir . --target prod
-          --vars '{"silver_path": "az://cricket-data/silver"}'
+          --vars '{"silver_path": "abfs://cricket-data/silver"}'

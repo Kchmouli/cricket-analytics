@@ -11,8 +11,7 @@ cricket_analytics:
       type: duckdb
       path: "../data/gold.duckdb"
       threads: 4
-      extensions:
-        - azure
-      secrets:
-        - type: azure
-          connection_string: "AccountName=cricketanalyticsdata;AccountKey={{ env_var('AZURE_STORAGE_ACCOUNT_KEY') }}"
+      filesystems:
+        - fs: abfs
+          account_name: cricketanalyticsdata
+          account_key: "{{ env_var('AZURE_STORAGE_ACCOUNT_KEY') }}"

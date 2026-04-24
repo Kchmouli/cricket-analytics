@@ -64,7 +64,9 @@ GOLD_PATH=abfs://cricket-data@cricketanalyticsdata.dfs.core.windows.net/gold
 - dev:  silver reads from ../data/silver (local Parquet)
 - prod: silver reads from az://cricket-data/silver (ADLS via DuckDB azure extension)
 - Both write gold to ../data/gold.duckdb
-- Pass silver path for prod: --vars '{"silver_path": "az://cricket-data/silver"}'
+- Pass silver path for prod: --vars '{"silver_path": "abfs://cricket-data/silver"}'
+- dbt prod reads silver via adlfs (Python SSL stack) — NOT DuckDB azure extension
+  adlfs registered in profiles.yml filesystems block; avoids DuckDB SSL issues on Linux
 
 ## Conventions
 - Parquet partitioned by match_type and year
