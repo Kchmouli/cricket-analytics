@@ -75,3 +75,6 @@ jobs:
           dbt test
           --profiles-dir . --target prod
           --vars '{"silver_path": "abfs://cricket-data/silver"}'
+
+      - name: Upload gold.duckdb to ADLS
+        run: python ingestion/upload_gold.py

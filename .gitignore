@@ -17,7 +17,9 @@ dbt_project/dbt_packages/
 dbt_project/logs/
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 
 # Claude memory
 .claude/
