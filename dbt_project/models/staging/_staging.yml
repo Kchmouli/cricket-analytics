@@ -36,8 +36,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_matches')
-              field: match_id
+              arguments:
+                to: ref('stg_matches')
+                field: match_id
       - name: innings_number
         description: "1-indexed innings sequence within the match (can exceed 4 with multiple super overs)"
         tests:
@@ -53,8 +54,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_matches')
-              field: match_id
+              arguments:
+                to: ref('stg_matches')
+                field: match_id
       - name: innings_number
         tests:
           - not_null
@@ -82,8 +84,9 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_matches')
-              field: match_id
+              arguments:
+                to: ref('stg_matches')
+                field: match_id
       - name: player_name
         tests:
           - not_null

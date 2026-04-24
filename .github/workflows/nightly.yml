@@ -14,6 +14,7 @@ jobs:
       AZURE_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
       AZURE_STORAGE_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_ACCOUNT_KEY }}
       AZURE_STORAGE_CONTAINER: ${{ secrets.AZURE_STORAGE_CONTAINER }}
+      CURL_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
 
     steps:
       - name: Checkout
