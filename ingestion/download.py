@@ -10,7 +10,7 @@ load_dotenv()
 
 CRICSHEET_BASE = "https://cricsheet.org/downloads/"
 FULL_LOAD_URL = f"{CRICSHEET_BASE}all_male_json.zip"
-INCREMENTAL_URL = f"{CRICSHEET_BASE}recently_added_2_male_json.zip"
+INCREMENTAL_URL = f"{CRICSHEET_BASE}recently_played_30_male_json.zip"
 
 LOCAL_RAW = Path("data/raw")
 
