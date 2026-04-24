@@ -15,5 +15,4 @@ cricket_analytics:
         - azure
       secrets:
         - type: azure
-          account_name: cricketanalyticsdata
-          account_key: "{{ env_var('AZURE_STORAGE_ACCOUNT_KEY') }}"
+          connection_string: "AccountName=cricketanalyticsdata;AccountKey={{ env_var('AZURE_STORAGE_ACCOUNT_KEY') }}"
