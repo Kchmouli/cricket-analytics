@@ -13,6 +13,7 @@ cricket_analytics:
       threads: 4
       extensions:
         - azure
-      settings:
-        azure_account_name: cricketanalyticsdata
-        azure_account_key: "{{ env_var('AZURE_STORAGE_ACCOUNT_KEY') }}"
+      secrets:
+        - type: azure
+          account_name: cricketanalyticsdata
+          account_key: "{{ env_var('AZURE_STORAGE_ACCOUNT_KEY') }}"
