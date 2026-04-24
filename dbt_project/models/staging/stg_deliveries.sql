@@ -1,5 +1,14 @@
 with source as (
     select * from {{ source('silver', 'deliveries') }}
+),
+
+deduped as (
+    select *
+    from source
+    qualify row_number() over (
+        partition by match_id, innings_number, over_number, ball_in_over
+        order by match_id
+    ) = 1
 )
 
 select
@@ -29,4 +38,4 @@ select
     review_by,
     review_decision,
     review_umpires_call
-from source
+from deduped

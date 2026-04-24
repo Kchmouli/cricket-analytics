@@ -27,6 +27,28 @@ def load_silver():
     total = len(all_files)
     print(f"Found {total} Parquet files to upload")
 
+    # Collect unique Hive partition directories being written this run
+    partitions = set()
+    for local_path in all_files:
+        relative = local_path.relative_to(LOCAL_SILVER)
+        partitions.add(f"silver/{relative.parent.as_posix()}")
+
+    # Delete stale Parquet files in each affected partition before uploading.
+    # This prevents duplicate rows from accumulating across incremental runs
+    # (each run writes new UUID-named files; without deletion, old files remain).
+    print(f"Replacing {len(partitions)} partition(s) in ADLS ...")
+    for partition_dir in sorted(partitions):
+        try:
+            deleted = 0
+            for path_item in fs.get_paths(path=partition_dir):
+                if not path_item.is_directory and path_item.name.endswith(".parquet"):
+                    fs.get_file_client(path_item.name).delete_file()
+                    deleted += 1
+            if deleted:
+                print(f"  Cleared {deleted} file(s) from {partition_dir}")
+        except Exception:
+            pass  # partition doesn't exist yet on first run
+
     uploaded = 0
     errors = 0
 

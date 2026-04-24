@@ -1,5 +1,11 @@
 with source as (
     select * from {{ source('silver', 'matches') }}
+),
+
+deduped as (
+    select *
+    from source
+    qualify row_number() over (partition by match_id order by revision desc) = 1
 )
 
 select
@@ -34,4 +40,4 @@ select
     overs,
     match_type_number,
     revision
-from source
+from deduped
