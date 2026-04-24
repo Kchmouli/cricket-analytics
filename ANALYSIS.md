@@ -3,30 +3,29 @@
 ## Getting fresh data
 
 The nightly pipeline runs at 3 AM UTC and automatically uploads `gold.duckdb` to Azure.
-To pull the latest copy locally:
+To pull the latest copy locally, open a **cmd** terminal (not PowerShell) from the project root:
 
 ```
-.venv\Scripts\activate.bat
-python ingestion\download_gold.py
+.venv\Scripts\python.exe ingestion\download_gold.py
 ```
 
-Run this once before each analysis session. Takes ~30 seconds.
+Run this once before each analysis session. Takes ~30 seconds (~200 MB download).
+
+> **Note:** Run from `C:\Users\Chandra.Mouli\cricket-analytics` — not from a subdirectory.
 
 ---
 
-## Querying in VS Code
+## Querying in VS Code (Jupyter Notebook)
 
-1. Install the two extensions VS Code will prompt you about:
-   - **SQLTools** (mtxr.sqltools)
-   - **SQLTools DuckDB Driver** (Evidence.sqltools-duckdb-driver)
+1. Open `analysis.ipynb` in VS Code
 
-2. Open the SQLTools panel from the sidebar (database icon)
+2. Select the `.venv` Python kernel when prompted (click **Select Kernel** → **Python Environments** → choose the venv)
 
-3. Click **Cricket Gold** → **Connect**
+3. Run the first cell (imports + `duckdb.connect`) — you should see `Connected to gold.duckdb`
 
-4. Open any `.sql` file in `queries/`, highlight a query, press **Ctrl+E** to run it
+4. Run any query cell with **Shift+Enter** — results display as a pandas DataFrame table
 
-Results appear in the panel below the editor.
+5. Modify queries directly in cells — change player names, filters, date ranges as needed
 
 ---
 
