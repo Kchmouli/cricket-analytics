@@ -1,3 +1,5 @@
+{{ config(materialized='ephemeral') }}
+
 with deliveries as (
     select * from {{ ref('stg_deliveries') }}
 ),
