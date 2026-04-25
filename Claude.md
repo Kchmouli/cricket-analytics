@@ -62,9 +62,13 @@ GOLD_PATH=abfs://cricket-data@cricketanalyticsdata.dfs.core.windows.net/gold
 
 ### dbt prod vs dev
 - dev:  silver reads from ../data/silver (local Parquet)
-- prod: silver reads from az://cricket-data/silver (ADLS via DuckDB azure extension)
+- prod: silver reads from abfs://cricket-data/silver (ADLS via adlfs)
 - Both write gold to ../data/gold.duckdb
-- Pass silver path for prod: --vars '{"silver_path": "abfs://cricket-data/silver"}'
+- ALWAYS pass --vars explicitly to override stale view definitions in gold.duckdb:
+  dev:  dbt run --profiles-dir . --target dev --vars '{"silver_path": "../data/silver"}'
+  prod: dbt run --profiles-dir . --target prod --vars '{"silver_path": "abfs://cricket-data/silver"}'
+- Without explicit --vars, a prior prod run's ADLS views persist in gold.duckdb and
+  dev silently reads from ADLS instead of local silver — causes wrong batting_team data
 - dbt prod reads silver via adlfs (Python SSL stack) — NOT DuckDB azure extension
   adlfs registered in profiles.yml filesystems block; avoids DuckDB SSL issues on Linux
 
