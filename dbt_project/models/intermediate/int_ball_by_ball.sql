@@ -22,6 +22,14 @@ matches as (
     from {{ ref('stg_matches') }}
 ),
 
+-- Actual batting team per innings from the source data.
+-- info.teams[] order does not guarantee which team bats first;
+-- innings[].team is the authoritative source for batting order.
+innings_meta as (
+    select match_id, innings_number, batting_team
+    from {{ ref('stg_innings') }}
+),
+
 team_map as (
     select * from {{ ref('seed_team_name_map') }}
 ),
@@ -47,15 +55,14 @@ enriched as (
         d.bowler,
         d.non_striker,
 
-        -- batting team resolved from innings join via matches
+        -- batting team from actual innings metadata, not inferred from team_1/team_2 order
+        coalesce(tb.canonical_name, i.batting_team)              as batting_team,
+        -- bowling team is whichever match team is not batting
         case
-            when d.innings_number % 2 = 1 then coalesce(t1.canonical_name, m.team_1)
-            else coalesce(t2.canonical_name, m.team_2)
-        end                                          as batting_team,
-        case
-            when d.innings_number % 2 = 1 then coalesce(t2.canonical_name, m.team_2)
+            when i.batting_team = m.team_1
+                then coalesce(t2.canonical_name, m.team_2)
             else coalesce(t1.canonical_name, m.team_1)
-        end                                          as bowling_team,
+        end                                                       as bowling_team,
 
         coalesce(v.canonical_venue, m.venue)         as venue,
         coalesce(v.canonical_city,  m.city)          as city,
@@ -85,9 +92,13 @@ enriched as (
 
     from deliveries d
     inner join matches m on d.match_id = m.match_id
-    left join team_map t1 on m.team_1 = t1.raw_name
-    left join team_map t2 on m.team_2 = t2.raw_name
-    left join venue_map v  on m.venue  = v.raw_venue
+    inner join innings_meta i
+        on  d.match_id       = i.match_id
+        and d.innings_number = i.innings_number
+    left join team_map tb on i.batting_team = tb.raw_name  -- canonicalize the innings batting team
+    left join team_map t1 on m.team_1       = t1.raw_name  -- needed for bowling_team derivation
+    left join team_map t2 on m.team_2       = t2.raw_name  -- needed for bowling_team derivation
+    left join venue_map v  on m.venue       = v.raw_venue
 )
 
 select * from enriched
