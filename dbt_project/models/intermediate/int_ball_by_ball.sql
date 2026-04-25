@@ -1,13 +1,4 @@
-{{
-  config(
-    materialized = 'table',
-    indexes = [
-      {'columns': ['match_id', 'innings_number', 'over_number', 'ball_in_over']},
-      {'columns': ['batter']},
-      {'columns': ['bowler']},
-    ]
-  )
-}}
+{{ config(materialized = 'view') }}
 
 with deliveries as (
     select * from {{ ref('stg_deliveries') }}
