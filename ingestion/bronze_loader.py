@@ -13,6 +13,10 @@ container = os.getenv("AZURE_STORAGE_CONTAINER")
 
 LOCAL_RAW = Path("data/raw")
 
+# Stored at bronze/_revision_index.json — maps relative path → revision int.
+# One ADLS read at startup instead of one get_file_properties() call per file.
+REVISION_INDEX_PATH = "bronze/_revision_index.json"
+
 
 def get_client():
     return DataLakeServiceClient(
@@ -26,26 +30,39 @@ def get_local_revision(local_path: Path) -> int:
     return data.get("meta", {}).get("revision", 1)
 
 
-def get_remote_revision(file_client) -> int:
-    """Returns stored revision from ADLS metadata; -1 if file does not exist."""
+def load_revision_index(fs) -> dict:
+    """Download the revision index from ADLS in one API call. Returns {} if absent."""
     try:
-        props = file_client.get_file_properties()
-        metadata = props.metadata or {}
-        return int(metadata.get("revision", 0))
-    except ResourceNotFoundError:
-        return -1
+        file_client = fs.get_file_client(REVISION_INDEX_PATH)
+        data = file_client.download_file().readall()
+        return json.loads(data)
+    except (ResourceNotFoundError, Exception):
+        return {}
 
 
-def upload_file(file_client, local_path: Path, revision: int):
+def save_revision_index(fs, index: dict):
+    """Write the updated revision index back to ADLS in one API call."""
+    file_client = fs.get_file_client(REVISION_INDEX_PATH)
+    payload = json.dumps(index, separators=(",", ":")).encode()
+    file_client.upload_data(payload, overwrite=True)
+
+
+def upload_file(fs, remote_path: str, local_path: Path, revision: int):
+    file_client = fs.get_file_client(remote_path)
+    file_size = local_path.stat().st_size
     with open(local_path, "rb") as f:
-        data = f.read()
-    file_client.upload_data(data, overwrite=True)
+        file_client.upload_data(f, length=file_size, overwrite=True)
     file_client.set_metadata({"revision": str(revision)})
 
 
 def load_bronze():
     client = get_client()
     fs = client.get_file_system_client(container)
+
+    # Load all known remote revisions in one API call rather than one call per file.
+    print("Loading revision index from ADLS...")
+    remote_index = load_revision_index(fs)
+    print(f"  Index contains {len(remote_index)} known files")
 
     all_files = list(LOCAL_RAW.rglob("*.json"))
     total_files = len(all_files)
@@ -59,17 +76,19 @@ def load_bronze():
     for i, local_path in enumerate(all_files, 1):
         try:
             relative = local_path.relative_to(LOCAL_RAW)
-            remote_path = f"bronze/{relative.as_posix()}"
+            index_key = relative.as_posix()          # e.g. "match_type/year/id.json"
+            remote_path = f"bronze/{index_key}"
 
             local_revision = get_local_revision(local_path)
-            file_client = fs.get_file_client(remote_path)
-            remote_revision = get_remote_revision(file_client)
+            remote_revision = remote_index.get(index_key, -1)
 
             if remote_revision == -1:
-                upload_file(file_client, local_path, local_revision)
+                upload_file(fs, remote_path, local_path, local_revision)
+                remote_index[index_key] = local_revision
                 new_count += 1
             elif local_revision > remote_revision:
-                upload_file(file_client, local_path, local_revision)
+                upload_file(fs, remote_path, local_path, local_revision)
+                remote_index[index_key] = local_revision
                 updated_count += 1
             else:
                 skipped_count += 1
@@ -83,6 +102,9 @@ def load_bronze():
         except Exception as e:
             print(f"  ERROR {local_path.name}: {e}")
             errors += 1
+
+    print("\nSaving updated revision index to ADLS...")
+    save_revision_index(fs, remote_index)
 
     print(f"\nBronze load complete.")
     print(f"  New:     {new_count}")

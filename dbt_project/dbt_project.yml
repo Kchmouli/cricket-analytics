@@ -22,7 +22,7 @@ vars:
 models:
   cricket_analytics:
     staging:
-      +materialized: view
+      +materialized: table
       +schema: staging
     intermediate:
       +materialized: table

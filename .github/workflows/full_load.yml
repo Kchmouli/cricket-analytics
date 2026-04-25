@@ -54,8 +54,8 @@ jobs:
       - name: Rebuild silver Parquet from all JSON files
         run: python ingestion/silver_transformer.py --mode full
 
-      - name: Upload all silver Parquet to ADLS
-        run: python ingestion/silver_loader.py
+      - name: Upload all silver Parquet to ADLS (purge stale files first)
+        run: python ingestion/silver_loader.py --full
 
       # ── Gold (dbt) ────────────────────────────────────────────────────────────
       - name: dbt seed

@@ -7,5 +7,5 @@ select
     runs_batter,
     runs_extras,
     runs_total
-from {{ ref('stg_deliveries') }}
+from {{ ref('fct_deliveries') }}
 where runs_total != runs_batter + runs_extras

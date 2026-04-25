@@ -12,7 +12,7 @@ load_dotenv()
 LOCAL_RAW = Path("data/raw")
 LOCAL_SILVER = Path("data/silver")
 
-WRITE_BATCH_SIZE = 1000  # files per Parquet write
+WRITE_BATCH_SIZE = 5000  # files per Parquet write
 
 MATCH_COLS = [
     "match_id", "match_type", "year", "match_date", "season", "venue", "city",
@@ -197,6 +197,9 @@ def write_batch(mb, ib, db, pb):
             root_path=str(LOCAL_SILVER / name),
             partition_cols=["match_type", "year"],
             existing_data_behavior="overwrite_or_ignore",
+            compression="zstd",
+            compression_level=3,
+            row_group_size=100_000,
         )
 
 

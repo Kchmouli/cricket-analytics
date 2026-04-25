@@ -58,6 +58,13 @@ batting as (
         b.innings_number, b.batter, b.batting_team, b.bowling_team, i.super_over
 ),
 
+-- Distinct (match_id, player_name) pairs for any player who bats in the match.
+-- Used for the match-level anti-join in non_striker_only.
+batting_by_match as (
+    select distinct match_id, player_name
+    from batting
+),
+
 -- Players dismissed without facing a ball (e.g. run out as non-striker).
 -- They appear in all_dismissals but not in batting, so must be added
 -- explicitly to avoid undercounting innings and inflating averages.
@@ -88,12 +95,12 @@ zero_ball_dismissals as (
     inner join innings i
         on  d.match_id       = i.match_id
         and d.innings_number = i.innings_number
-    where not exists (
-        select 1 from batting bt
-        where  bt.match_id       = d.match_id
-          and  bt.innings_number  = d.innings_number
-          and  bt.player_name     = d.player_name
-    )
+    -- anti-join: player did not bat normally in this innings
+    left join batting bt
+        on  bt.match_id       = d.match_id
+        and bt.innings_number = d.innings_number
+        and bt.player_name    = d.player_name
+    where bt.player_name is null
 ),
 
 -- Players who reached the crease as non-striker but faced 0 balls,
@@ -121,26 +128,25 @@ non_striker_only as (
     inner join innings i
         on  b.match_id       = i.match_id
         and b.innings_number = i.innings_number
-    where not exists (
-        select 1 from batting bt
-        where  bt.match_id       = b.match_id
-          and  bt.innings_number  = b.innings_number
-          and  bt.player_name     = b.non_striker
-    )
-    and not exists (
-        select 1 from all_dismissals d
-        where  d.match_id       = b.match_id
-          and  d.innings_number  = b.innings_number
-          and  d.player_name     = b.non_striker
-    )
-    -- Exclude if the player bats in any innings of this match.
+    -- anti-join: player didn't bat in this specific innings
+    left join batting bt_inn
+        on  bt_inn.match_id       = b.match_id
+        and bt_inn.innings_number = b.innings_number
+        and bt_inn.player_name    = b.non_striker
+    -- anti-join: player wasn't dismissed in this innings
+    left join all_dismissals dis
+        on  dis.match_id       = b.match_id
+        and dis.innings_number = b.innings_number
+        and dis.player_name    = b.non_striker
+    -- anti-join: player didn't bat in any innings of this match.
     -- Prevents old Cricsheet files where a player's name appears as non_striker
     -- in the opposing team's innings from creating a spurious extra innings.
-    and not exists (
-        select 1 from batting bt2
-        where  bt2.match_id    = b.match_id
-          and  bt2.player_name = b.non_striker
-    )
+    left join batting_by_match bm
+        on  bm.match_id    = b.match_id
+        and bm.player_name = b.non_striker
+    where bt_inn.player_name is null
+      and dis.player_name   is null
+      and bm.player_name    is null
 )
 
 select
