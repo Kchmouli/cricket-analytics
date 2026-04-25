@@ -13,6 +13,10 @@ with deliveries as (
     select * from {{ ref('stg_deliveries') }}
 ),
 
+excluded_matches as (
+    select match_id from {{ ref('seed_excluded_matches') }}
+),
+
 matches as (
     select
         match_id,
@@ -101,6 +105,7 @@ enriched as (
 
     from deliveries d
     inner join matches m on d.match_id = m.match_id
+    left join excluded_matches ex on d.match_id = ex.match_id
     inner join innings_meta i
         on  d.match_id       = i.match_id
         and d.innings_number = i.innings_number
@@ -108,6 +113,7 @@ enriched as (
     left join team_map t1 on m.team_1       = t1.raw_name  -- needed for bowling_team derivation
     left join team_map t2 on m.team_2       = t2.raw_name  -- needed for bowling_team derivation
     left join venue_map v  on m.venue       = v.raw_venue
+    where ex.match_id is null
 )
 
 select * from enriched
