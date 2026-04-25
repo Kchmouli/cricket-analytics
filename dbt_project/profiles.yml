@@ -5,12 +5,12 @@ cricket_analytics:
     dev:
       type: duckdb
       path: "../data/gold.duckdb"
-      threads: 4
+      threads: 8
 
     prod:
       type: duckdb
       path: "../data/gold.duckdb"
-      threads: 4
+      threads: 8
       filesystems:
         - fs: abfs
           account_name: cricketanalyticsdata
