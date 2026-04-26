@@ -16,7 +16,9 @@ all_dismissals as (
         wicket_player_out                as player_name,
         max(wicket_kind)                 as dismissal_kind
     from ball_by_ball
-    where is_wicket and wicket_player_out is not null
+    where is_wicket
+      and wicket_player_out is not null
+      and wicket_kind <> 'retired hurt'
     group by match_id, innings_number, wicket_player_out
 ),
 
