@@ -2,8 +2,8 @@ name: Nightly Pipeline
 
 on:
   schedule:
-    - cron: "30 13 * * *"    # 8:30 AM CDT daily (13:30 UTC)
-    - cron: "30 9 * * 0,6"   # 4:30 AM CDT weekends (9:30 UTC)
+    - cron: "30 12 * * *"    # 7:30 AM CDT daily (12:30 UTC) — targets ~9:00 AM completion
+    - cron: "30 8 * * 0,6"   # 3:30 AM CDT weekends (8:30 UTC) — targets ~5:00 AM completion
   workflow_dispatch:        # allow manual trigger from GitHub UI
 
 jobs:
